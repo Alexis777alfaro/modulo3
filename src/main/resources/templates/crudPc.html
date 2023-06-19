@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Computadoras</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-4">Gestión de Computadoras</h1>
+	<button class="btn btn-primary" onclick="redirectToCrudUsers()">Ir a Mantenimiento Usuarios</button>
+        <h2>Listado de Computadoras</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Tipo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="computersTableBody"></tbody>
+        </table>
+
+        <h2>Agregar Nueva Computadora</h2>
+        <form id="addComputerForm">
+            <div class="mb-3">
+                <label for="fechaIngresoInput" class="form-label">Fecha de Ingreso:</label>
+                <input type="text" class="form-control" id="fechaIngresoInput" required>
+            </div>
+            <div class="mb-3">
+                <label for="nombrePropietarioInput" class="form-label">Nombre del Propietario:</label>
+                <input type="text" class="form-control" id="nombrePropietarioInput" required>
+            </div>
+            <div class="mb-3">
+                <label for="marcaInput" class="form-label">Marca:</label>
+                <input type="text" class="form-control" id="marcaInput" required>
+            </div>
+            <div class="mb-3">
+                <label for="modeloInput" class="form-label">Modelo:</label>
+                <input type="text" class="form-control" id="modeloInput" required>
+            </div>
+            <div class="mb-3">
+                <label for="tipoInput" class="form-label">Tipo:</label>
+                <input type="text" class="form-control" id="tipoInput" required>
+            </div>
+            <div class="mb-3">
+                <label for="serieInput" class="form-label">Serie:</label>
+                <input type="text" class="form-control" id="serieInput" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </form>
+    </div>
+
+    <!-- Modal de Edición -->
+    <div class="modal fade" id="editComputerModal" tabindex="-1" aria-labelledby="editComputerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editComputerModalLabel">Editar Computadora</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editComputerForm">
+                        <div class="mb-3">
+                            <label for="editFechaIngresoInput" class="form-label">Fecha de Ingreso:</label>
+                            <input type="text" class="form-control" id="editFechaIngresoInput" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editNombrePropietarioInput" class="form-label">Nombre del Propietario:</label>
+                            <input type="text" class="form-control" id="editNombrePropietarioInput" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editMarcaInput" class="form-label">Marca:</label>
+                            <input type="text" class="form-control" id="editMarcaInput" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editModeloInput" class="form-label">Modelo:</label>
+                            <input type="text" class="form-control" id="editModeloInput" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editTipoInput" class="form-label">Tipo:</label>
+                            <input type="text" class="form-control" id="editTipoInput" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editSerieInput" class="form-label">Serie:</label>
+                            <input type="text" class="form-control" id="editSerieInput" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    <script>
+    
+     function redirectToCrudUsers() {
+        window.location.href = '/Crudusers.html';
+    }
+        const computersTableBody = document.getElementById('computersTableBody');
+        const addComputerForm = document.getElementById('addComputerForm');
+        const editComputerModal = new bootstrap.Modal(document.getElementById('editComputerModal'));
+
+        // Obtener todas las computadoras al cargar la página
+        fetch('/mongo/pc')
+            .then(response => response.json())
+            .then(data => {
+                // Generar filas de tabla para cada computadora
+                data.forEach(computer => {
+                    const row = document.createElement('tr');
+                    row.id = `computerRow-${computer.id}`;
+                    row.innerHTML = `
+                        <td>${computer.id}</td>
+                        <td>${computer.marca}</td>
+                        <td>${computer.modelo}</td>
+                        <td>${computer.tipo}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="editComputer('${computer.id}', '${computer.fechaIngreso}', '${computer.nombrePropietario}', '${computer.marca}', '${computer.modelo}', '${computer.tipo}', '${computer.serie}')" data-bs-toggle="modal" data-bs-target="#editComputerModal">Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteComputer('${computer.id}')">Eliminar</button>
+                        </td>
+                    `;
+                    computersTableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error al obtener las computadoras:', error);
+            });
+
+        // Agregar una nueva computadora al enviar el formulario
+        addComputerForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const fechaIngreso = document.getElementById('fechaIngresoInput').value;
+            const nombrePropietario = document.getElementById('nombrePropietarioInput').value;
+            const marca = document.getElementById('marcaInput').value;
+            const modelo = document.getElementById('modeloInput').value;
+            const tipo = document.getElementById('tipoInput').value;
+            const serie = document.getElementById('serieInput').value;
+
+            const newComputer = {
+                fechaIngreso,
+                nombrePropietario,
+                marca,
+                modelo,
+                tipo,
+                serie
+            };
+
+            fetch('/mongo/pc', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newComputer)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Agregar nueva fila a la tabla
+                const newRow = document.createElement('tr');
+                newRow.id = `computerRow-${data.id}`;
+                newRow.innerHTML = `
+                    <td>${data.id}</td>
+                    <td>${data.marca}</td>
+                    <td>${data.modelo}</td>
+                    <td>${data.tipo}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="editComputer('${data.id}', '${data.fechaIngreso}', '${data.nombrePropietario}', '${data.marca}', '${data.modelo}', '${data.tipo}', '${data.serie}')" data-bs-toggle="modal" data-bs-target="#editComputerModal">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteComputer('${data.id}')">Eliminar</button>
+                    </td>
+                `;
+                computersTableBody.appendChild(newRow);
+
+                // Limpiar los campos del formulario
+                addComputerForm.reset();
+            })
+            .catch(error => {
+                console.error('Error al agregar la computadora:', error);
+            });
+        });
+
+        // Función para editar una computadora
+        function editComputer(id, fechaIngreso, nombrePropietario, marca, modelo, tipo, serie) {
+            document.getElementById('editFechaIngresoInput').value = fechaIngreso;
+            document.getElementById('editNombrePropietarioInput').value = nombrePropietario;
+            document.getElementById('editMarcaInput').value = marca;
+            document.getElementById('editModeloInput').value = modelo;
+            document.getElementById('editTipoInput').value = tipo;
+            document.getElementById('editSerieInput').value = serie;
+
+            const editComputerForm = document.getElementById('editComputerForm');
+            editComputerForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                const updatedComputer = {
+                    id,
+                    fechaIngreso: document.getElementById('editFechaIngresoInput').value,
+                    nombrePropietario: document.getElementById('editNombrePropietarioInput').value,
+                    marca: document.getElementById('editMarcaInput').value,
+                    modelo: document.getElementById('editModeloInput').value,
+                    tipo: document.getElementById('editTipoInput').value,
+                    serie: document.getElementById('editSerieInput').value
+                };
+
+                fetch(`/mongo/pc/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedComputer)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                })
+                .then(data => {
+                    console.log(data);
+                    const row = document.getElementById(`computerRow-${id}`);
+                    if (row) {
+                        row.innerHTML = `
+                            <td>${data.id}</td>
+                            <td>${data.marca}</td>
+                            <td>${data.modelo}</td>
+                            <td>${data.tipo}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="editComputer('${data.id}', '${data.fechaIngreso}', '${data.nombrePropietario}', '${data.marca}', '${data.modelo}', '${data.tipo}', '${data.serie}')">Editar</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteComputer('${data.id}')">Eliminar</button>
+                            </td>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al actualizar la computadora:', error);
+                });
+            });
+
+            editComputerModal.show();
+        }
+
+        // Función para eliminar una computadora
+        function deleteComputer(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta computadora?')) {
+                fetch(`/mongo/pc/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(() => {
+                    const row = document.getElementById(`computerRow-${id}`);
+                    if (row) {
+                        row.remove();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al eliminar la computadora:', error);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

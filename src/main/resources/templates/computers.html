@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Computadoras</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-4">Gestión de Computadoras</h1>
+
+        <h2>Listado de Computadoras</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Tipo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="computer : ${computersList}">
+                    <td th:text="${computer.id}"></td>
+                    <td th:text="${computer.marca}"></td>
+                    <td th:text="${computer.modelo}"></td>
+                    <td th:text="${computer.tipo}"></td>
+                    <td>
+                        <a class="btn btn-primary btn-sm" th:href="@{/mongo/pc/{id}(id=${computer.id})}">Ver detalles</a>
+                        <a class="btn btn-info btn-sm" href="#" data-toggle="modal" data-target="#editModal" data-computer-id="${computer.id}">Editar</a>
+                        <a class="btn btn-danger btn-sm" onclick="confirmDelete('${computer.id}')">Eliminar</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Agregar Nueva Computadora</h2>
+        <form th:action="@{/mongo/pc}" method="post">
+            <!-- Campos del formulario de creación -->
+            <div class="mb-3">
+                <label for="fechaIngresoInput" class="form-label">Fecha de Ingreso:</label>
+                <input type="text" class="form-control" id="fechaIngresoInput" name="fechaIngreso" required>
+            </div>
+            <div class="mb-3">
+                <label for="nombrePropietarioInput" class="form-label">Nombre del Propietario:</label>
+                <input type="text" class="form-control" id="nombrePropietarioInput" name="nombrePropietario" required>
+            </div>
+            <div class="mb-3">
+                <label for="marcaInput" class="form-label">Marca:</label>
+                <input type="text" class="form-control" id="marcaInput" name="marca" required>
+            </div>
+            <div class="mb-3">
+                <label for="modeloInput" class="form-label">Modelo:</label>
+                <input type="text" class="form-control" id="modeloInput" name="modelo" required>
+            </div>
+            <div class="mb-3">
+                <label for="tipoInput" class="form-label">Tipo:</label>
+                <input type="text" class="form-control" id="tipoInput" name="tipo" required>
+            </div>
+            <div class="mb-3">
+                <label for="serieInput" class="form-label">Serie:</label>
+                <input type="text" class="form-control" id="serieInput" name="serie" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </form>
+    </div>
+
+    <!-- Modal de Edición -->
+    <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Editar Computadora</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm" method="post">
+                        <!-- Campos del formulario de edición -->
+                        <div class="form-group">
+                            <label for="editFechaIngresoInput">Fecha de Ingreso:</label>
+                            <input type="text" class="form-control" id="editFechaIngresoInput" name="fechaIngreso" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editNombrePropietarioInput">Nombre del Propietario:</label>
+                            <input type="text" class="form-control" id="editNombrePropietarioInput" name="nombrePropietario" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editMarcaInput">Marca:</label>
+                            <input type="text" class="form-control" id="editMarcaInput" name="marca" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editModeloInput">Modelo:</label>
+                            <input type="text" class="form-control" id="editModeloInput" name="modelo" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editTipoInput">Tipo:</label>
+                            <input type="text" class="form-control" id="editTipoInput" name="tipo" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editSerieInput">Serie:</label>
+                            <input type="text" class="form-control" id="editSerieInput" name="serie" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Obtener la referencia al formulario de edición
+        var editForm = $('#editForm');
+
+        // Al abrir el modal de edición, obtener los datos de la computadora mediante una llamada a la API
+        $('#editModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget); // Botón que abre el modal
+            var computerId = button.data('computer-id'); // ID de la computadora
+
+            // Realizar una llamada a la API para obtener los datos de la computadora correspondiente
+            $.ajax({
+                url: '/mongo/pc/' + computerId, // URL de la API para obtener los datos de la computadora
+                method: 'GET',
+                success: function(response) {
+                    // Actualizar los campos del formulario de edición con los datos de la computadora
+                    editForm.find('#editFechaIngresoInput').val(response.fechaIngreso);
+                    editForm.find('#editNombrePropietarioInput').val(response.nombrePropietario);
+                    editForm.find('#editMarcaInput').val(response.marca);
+                    editForm.find('#editModeloInput').val(response.modelo);
+                    editForm.find('#editTipoInput').val(response.tipo);
+                    editForm.find('#editSerieInput').val(response.serie);
+                },
+                error: function() {
+                    alert('Error al obtener los datos de la computadora.');
+                }
+            });
+        });
+
+        // Manejar el evento de envío del formulario de edición
+        editForm.submit(function(event) {
+            event.preventDefault(); // Evitar que se envíe el formulario de manera convencional
+
+            // Obtener los valores actualizados de los campos del formulario
+            var updatedComputer = {
+                fechaIngreso: editForm.find('#editFechaIngresoInput').val(),
+                nombrePropietario: editForm.find('#editNombrePropietarioInput').val(),
+                marca: editForm.find('#editMarcaInput').val(),
+                modelo: editForm.find('#editModeloInput').val(),
+                tipo: editForm.find('#editTipoInput').val(),
+                serie: editForm.find('#editSerieInput').val()
+            };
+
+            // Realizar una llamada a la API o ejecutar la lógica necesaria para actualizar los datos de la computadora
+
+            // Cerrar el modal de edición
+            $('#editModal').modal('hide');
+        });
+    </script>
+
+    <script>
+        function confirmDelete(id) {
+            if (confirm("¿Estás seguro de que quieres eliminar esta computadora?")) {
+                window.location.href = '/mongo/pc/' + id + '/delete';
+            }
+        }
+    </script>
+</body>
+</html>
